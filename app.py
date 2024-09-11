@@ -26,15 +26,13 @@ for key in ['analysis_result', 'combined_content']:
         st.session_state[key] = None
 
 def get_api_key():
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = st.secrets.get("GOOGLE_API_KEY")
     if not api_key:
         api_key = st.sidebar.text_input("输入您的Google Gemini API密钥", type="password")
         if api_key:
-            set_key('.env', "GOOGLE_API_KEY", api_key)
-            os.environ["GOOGLE_API_KEY"] = api_key
             st.sidebar.success("API密钥已设置并保存!")
     else:
-        st.sidebar.success("已从.env文件中读取API密钥")
+        st.sidebar.success("已从Secrets中读取API密钥")
     return api_key
 
 st.title("文档分析器")
