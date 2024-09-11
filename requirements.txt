@@ -1,0 +1,9 @@
+streamlit
+google-generativeai
+pdfplumber
+Pillow
+python-dotenv
+python-pptx
+python-docx
+openpyxl
+markdown
