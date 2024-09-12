@@ -75,7 +75,12 @@ def try_gemini_file_api(file, selected_prompt):
         if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
             logging.info(f"处理Excel文件")
             text_content = extract_content_from_xlsx(BytesIO(file_content))
-            prompt_parts = [selected_prompt, text_content]
+            prompt_parts = [
+                "以下是一个Excel文件的内容，以Markdown表格格式呈现。请分析这些数据：\n\n",
+                text_content,
+                "\n\n",
+                selected_prompt
+            ]
         elif mime_type.startswith('image/'):
             logging.info(f"处理图像文件")
             image = Image.open(BytesIO(file_content))
