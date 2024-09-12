@@ -58,24 +58,25 @@ def try_gemini_file_api(file, selected_prompt):
         # 准备内容
         if isinstance(file, BytesIO):
             file_content = file.getvalue()
-            mime_type = 'application/octet-stream'
         elif isinstance(file, str):
             file_content = file.encode('utf-8')
-            mime_type = 'text/plain'
-        elif hasattr(file, 'read'):  # 检查是否为文件对象
+        elif hasattr(file, 'read'):
             file_content = file.read()
-            mime_type = getattr(file, 'type', 'application/octet-stream')
         else:
             raise ValueError(f"Unsupported file type: {type(file)}")
 
-        # 如果mime_type是application/octet-stream，尝试根据文件名猜测正确的MIME类型
+        mime_type = getattr(file, 'type', 'application/octet-stream')
         if mime_type == 'application/octet-stream' and hasattr(file, 'name'):
             guessed_type = mimetypes.guess_type(file.name)[0]
             if guessed_type:
                 mime_type = guessed_type
 
-        # 处理不同类型的内容
-        if mime_type.startswith('image/'):
+        # 处理Excel文件
+        if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+            logging.info(f"处理Excel文件")
+            text_content = extract_content_from_xlsx(BytesIO(file_content))
+            prompt_parts = [selected_prompt, text_content]
+        elif mime_type.startswith('image/'):
             logging.info(f"处理图像文件")
             image = Image.open(BytesIO(file_content))
             prompt_parts = [selected_prompt, image]
