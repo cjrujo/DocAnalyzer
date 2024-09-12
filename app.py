@@ -70,6 +70,8 @@ def try_gemini_file_api(file, selected_prompt):
             guessed_type = mimetypes.guess_type(file.name)[0]
             if guessed_type:
                 mime_type = guessed_type
+        if file.name.endswith('.xlsx'):
+            mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
         # 处理Excel文件
         if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
