@@ -120,6 +120,7 @@ def try_gemini_file_api(file, selected_prompt):
         logging.error(f"Gemini 文件 API 处理过程中发生错误：{str(e)}", exc_info=True)
         return f"Gemini 文件 API 处理过程中发生错误：{str(e)}"
 
+
 def extract_content_from_file(file):
     content = try_gemini_file_api(file, "请分析这个文件的内容")
     if content is not None:
@@ -216,12 +217,36 @@ def extract_content_from_docx(file):
 
 def extract_content_from_xlsx(file):
     content = []
-    workbook = openpyxl.load_workbook(file)
-    for sheet in workbook.sheetnames:
-        worksheet = workbook[sheet]
-        for row in worksheet.iter_rows(values_only=True):
-            content.append(" | ".join(str(cell) for cell in row if cell is not None))
-    return content
+    try:
+        workbook = openpyxl.load_workbook(file)
+        for sheet in workbook.sheetnames:
+            worksheet = workbook[sheet]
+            content.append(f"## Sheet: {sheet}\n")
+            
+            # 获取所有非空单元格
+            rows = list(worksheet.iter_rows(values_only=True))
+            non_empty_rows = [row for row in rows if any(cell is not None for cell in row)]
+            
+            if non_empty_rows:
+                # 创建表头
+                header = "| " + " | ".join(str(cell) for cell in non_empty_rows[0]) + " |"
+                separator = "|" + "|".join("---" for _ in non_empty_rows[0]) + "|"
+                content.append(header)
+                content.append(separator)
+                
+                # 添加数据行
+                for row in non_empty_rows[1:]:
+                    row_content = "| " + " | ".join(str(cell) if cell is not None else "" for cell in row) + " |"
+                    content.append(row_content)
+                
+                content.append("\n")  # 在表格后添加空行
+            else:
+                content.append("*This sheet is empty*\n")
+        
+        return "\n".join(content)
+    except Exception as e:
+        logging.error(f"处理Excel文件时发生错误：{str(e)}", exc_info=True)
+        return f"处理Excel文件时发生错误：{str(e)}"
 
 def extract_content_from_text(file):
     content = file.read().decode('utf-8')
