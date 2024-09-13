@@ -56,22 +56,29 @@ def try_gemini_file_api(file, selected_prompt):
         model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         # 准备内容
-        if isinstance(file, BytesIO):
-            file_content = file.getvalue()
-        elif isinstance(file, str):
+        if isinstance(file, str):
             file_content = file.encode('utf-8')
+            mime_type = 'text/plain'
+        elif isinstance(file, BytesIO):
+            file_content = file.getvalue()
+            mime_type = getattr(file, 'type', 'application/octet-stream')
         elif hasattr(file, 'read'):
             file_content = file.read()
+            mime_type = getattr(file, 'type', 'application/octet-stream')
         else:
             raise ValueError(f"Unsupported file type: {type(file)}")
 
-        mime_type = getattr(file, 'type', 'application/octet-stream')
         if mime_type == 'application/octet-stream' and hasattr(file, 'name'):
             guessed_type = mimetypes.guess_type(file.name)[0]
             if guessed_type:
                 mime_type = guessed_type
-        if file.name.endswith('.xlsx'):
+
+        # Manually handle the case where MIME type detection fails for Excel files
+        if hasattr(file, 'name') and file.name.endswith('.xlsx'):
             mime_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+        logging.info(f"File type: {type(file)}")
+        logging.info(f"MIME type: {mime_type}")
 
         # 处理Excel文件
         if mime_type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
@@ -120,7 +127,7 @@ def try_gemini_file_api(file, selected_prompt):
         return response.text
     except Exception as e:
         logging.error(f"Gemini 文件 API 处理过程中发生错误：{str(e)}", exc_info=True)
-        return f"Gemini 文件 API 处理过程中发生错误：{str(e)}"
+        return f"Gemini 文件 API 处理过程中发生错误：{str(e)}\n\n详细错误信息：{traceback.format_exc()}"
 
 
 def extract_content_from_file(file):
